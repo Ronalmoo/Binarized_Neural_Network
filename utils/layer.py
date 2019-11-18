@@ -3,27 +3,34 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
+from scipy.stats import binom
 
 
 def hard_sigmoid(x):
-    return torch.clamp((x + 1.0) / 2.0, 0, 1)
+    clamp = (torch.clamp((x + 1.0) / 2.0, -1, 1))
+    return clamp
 
 
-def binarization(x, deterministic=True):
+def binarization(w, deterministic=True):
     if deterministic:
-        x[x >= 0] = 1
-        x[x < 0] = -1
+        w[w >= 0] = 1
+        w[w < 0] = -1
         # sign = torch.sign(x)
         # sign[sign == 0] = 1
-        return x
+        return w
     else:
-        return hard_sigmoid(x)
+        p = hard_sigmoid(w)
+        matrix = torch.empty(p.shape).uniform_(-1, 1)
+        bin_weight = (p >= matrix).type(torch.float32)
+        bin_weight[bin_weight == 0] = -1
+        return bin_weight
+
+        # return torch.rand(hard_sigmoid(w).size()).round() * 2 - 1
 
 
-class BinaryLinear(nn.Module):
+class BinaryLinear(nn.Linear):
     def __init__(self, weight, weight_org, bias):
         super(BinaryLinear, self).__init__()
-        torch.flatten()
         self.weight = weight
         self.weight_org = weight_org
         self.bias = bias
@@ -53,8 +60,7 @@ class BinaryLinear(nn.Module):
 
 
 if __name__ == "__main__":
-    example = torch.tensor([[0.7, -1.2, 0., 2.3],
-                      [0.1, 0, -0.1, -3.0]]
-                     )
-    model = BinaryLinear()
-    model.apply(BinaryLinear.glorot_init())
+
+    example = torch.rand(5, 5)
+    print(binarization(example, deterministic=False))
+
