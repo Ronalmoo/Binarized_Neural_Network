@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 
 
-def hard_sigmoid(x:torch.tensor):
+def hard_sigmoid(x: torch.tensor):
     clamp = (torch.clamp((x + 1.0) / 2.0, 0, 1))
     return clamp
 
