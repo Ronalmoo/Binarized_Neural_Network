@@ -10,7 +10,12 @@ def hard_sigmoid(x: torch.tensor):
     return clamp
 
 
-def binarization(w, **kwargs: str):
+def binarization(w: torch.tensor, **kwargs: str):
+    """
+    :param w: Tensor that initialized randomly
+    :param kwargs: Depending on ype of binarization, "deterministic" or "stochastic"
+    :return: binarized tensor with +1 or -1
+    """
     if "deterministic" in kwargs.values():
         torch.tensor(w)
         w[w >= 0] = 1
