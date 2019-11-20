@@ -2,61 +2,53 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-import argparse
+from typing import *
 
 
-def hard_sigmoid(x: torch.tensor):
+def hard_sigmoid(x: torch.tensor) -> torch.tensor:
     clamp = (torch.clamp((x + 1.0) / 2.0, 0, 1))
     return clamp
 
 
-def binarization(w: torch.tensor, **kwargs: str):
-    """
-    :param w: Tensor that initialized randomly
-    :param kwargs: Depending on ype of binarization, "deterministic" or "stochastic"
-    :return: binarized tensor with +1 or -1
-    """
-    if "deterministic" in kwargs.values():
-        torch.tensor(w)
-        w[w >= 0] = 1
-        w[w < 0] = -1
-        # sign = torch.sign(x)
-        # sign[sign == 0] = 1
-        return w
-    elif "stochastic" in kwargs.values():
-        p = hard_sigmoid(w)
-        matrix = torch.empty(p.shape).uniform_(-1, 1)
-        bin_weight = (p >= matrix).type(torch.float32)
-        bin_weight[bin_weight == 0] = -1
-        return bin_weight
-        # return torch.rand(hard_sigmoid(w).size()).round() * 2 - 1
+def binarization(w: torch.tensor, mode="deterministic") -> torch.tensor:
+    if mode == 'deterministic':
+        return deterministic(w)
+
+    elif mode == "stochastic":
+        return stochastic(w)
+
     else:
-        raise RuntimeError("{} not supported".format(kwargs.values()))
+        raise RuntimeError
+
+
+def deterministic(w: torch.tensor) -> torch.tensor:
+    w[w >= 0] = 1
+    w[w < 0] = -1
+    return w
+
+
+def stochastic(w: torch.tensor) -> torch.tensor:
+    p = hard_sigmoid(w)
+    matrix = torch.empty(p.shape).uniform_(-1, 1)
+    bin_weight = (p >= matrix).type(torch.float32)
+    bin_weight[bin_weight == 0] = -1
+    return  bin_weight
 
 
 if __name__ == "__main__":
     # Test code
     # Use parser
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default="deterministic")
-    args = parser.parse_args()
     example = torch.randn(5, 5)
     print("example: {}".format(example))
     prob = hard_sigmoid(example)
     print("prob: {}".format(prob))
-    if args.mode == "deterministic":
-        binarization = binarization(example, mode=args.mode)
+    binarization_det = binarization(example, mode='deterministic')
 
-        for i in range(99):
-            print("Binarization: {}".format(binarization))
+    print("Binarization: {}".format(binarization_det))
 
-    elif args.mode == "stochastic":
-        binarization_sum = binarization(example, mode=args.mode)
-        print("Before sum Binarization: {}".format(binarization_sum))
+    binarization_sum = binarization(example, mode='stochastic')
+    print("Before sum Binarization: {}".format(binarization_sum))
 
-        for i in range(99):
-            binarization_sum += binarization(example, mode="stochastic")
-        print("After sum Binarization: {}".format(binarization_sum))
-
-    else:
-        raise RuntimeError("{} not supported".format(args.mode()))
+    for i in range(99):
+        binarization_sum += binarization(example, mode="stochastic")
+    print("After sum Binarizaion: {}".format(binarization_sum))
