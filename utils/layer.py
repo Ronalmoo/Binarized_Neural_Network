@@ -22,17 +22,19 @@ def binarization(w: torch.tensor, mode="deterministic") -> torch.tensor:
 
 
 def deterministic(w: torch.tensor) -> torch.tensor:
-    w[w >= 0] = 1
-    w[w < 0] = -1
+    with torch.no_grad():
+        w[w >= 0] = 1
+        w[w < 0] = -1
     return w
 
 
 def stochastic(w: torch.tensor) -> torch.tensor:
-    p = hard_sigmoid(w)
-    matrix = torch.empty(p.shape).uniform_(-1, 1)
-    bin_weight = (p >= matrix).type(torch.float32)
-    bin_weight[bin_weight == 0] = -1
-    return  bin_weight
+    with torch.no_grad():
+        p = hard_sigmoid(w)
+        matrix = torch.empty(p.shape).uniform_(-1, 1)
+        bin_weight = (p >= matrix).type(torch.float32)
+        bin_weight[bin_weight == 0] = -1
+    return bin_weight
 
 
 if __name__ == "__main__":
