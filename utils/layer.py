@@ -11,14 +11,15 @@ def hard_sigmoid(x: torch.tensor) -> torch.tensor:
 
 
 def binarization(w: torch.tensor, mode="deterministic") -> torch.tensor:
-    if mode == 'deterministic':
-        return deterministic(w)
+    with torch.no_grad():
+        if mode == 'deterministic':
+            return deterministic(w)
 
-    elif mode == "stochastic":
-        return stochastic(w)
+        elif mode == "stochastic":
+            return stochastic(w)
 
-    else:
-        raise RuntimeError
+        else:
+            raise RuntimeError
 
 
 def deterministic(w: torch.tensor) -> torch.tensor:
@@ -40,6 +41,7 @@ def stochastic(w: torch.tensor) -> torch.tensor:
 if __name__ == "__main__":
     # Test code
     # Use parser
+    print("torch_with_no_grad\n")
     example = torch.randn(5, 5)
     print("example: {}".format(example))
     prob = hard_sigmoid(example)
@@ -53,4 +55,23 @@ if __name__ == "__main__":
 
     for i in range(99):
         binarization_sum += binarization(example, mode="stochastic")
+    print("After sum Binarizaion: {}".format(binarization_sum))
+
+    print("\n------------------------------------------------------------\n" * 2)
+    print("torch_with_grad\n")
+
+    example_grad_true = torch.rand(5, 5, requires_grad=True)
+    print(example_grad_true)
+    print("example: {}".format(example_grad_true))
+    prob = hard_sigmoid(example_grad_true)
+    print("prob: {}".format(prob))
+    binarization_det = binarization(example, mode='deterministic')
+
+    print("Binarization: {}".format(binarization_det))
+
+    binarization_sum = binarization(example_grad_true, mode='stochastic')
+    print("Before sum Binarization: {}".format(binarization_sum))
+
+    for i in range(99):
+        binarization_sum += binarization(example_grad_true, mode="stochastic")
     print("After sum Binarizaion: {}".format(binarization_sum))
