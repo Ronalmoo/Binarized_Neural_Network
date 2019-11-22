@@ -40,7 +40,6 @@ def stochastic(w: torch.tensor) -> torch.tensor:
 
 if __name__ == "__main__":
     # Test code
-    # Use parser
     print("torch_with_no_grad\n")
     example = torch.randn(5, 5)
     print("example: {}".format(example))
